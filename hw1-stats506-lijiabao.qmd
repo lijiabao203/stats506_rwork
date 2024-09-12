@@ -1,0 +1,296 @@
+---
+title: "hw1-stats506-lijiabao"
+author: "JiabaoLi"
+format: pdf
+editor: visual
+execute: 
+  message: false
+  warning: false
+---
+
+> link of github: https://github.com/lijiabao203/stats506_rwork
+>
+> doc: hw1-stats506-lijiabao.qmd and hw1-stats506-lijiabao.pdf
+
+## problem 1 - wine data
+
+### a: Import the data and label the data
+
+Use function "read.table" to read "wine.data" and use "," as attribute "sep" to correctly read.
+
+Save it as data_wine in format "data.frame".
+
+Finally use function "names" to label the data.
+
+```{r}
+data_wine = data.frame(read.table("./wine/wine.data", sep = ','))
+names(data_wine) = c("Class", "Alcohol", "Malic acid", "Ash", "Alcalinity of ash", "Magnesium", "Total phenols", "Flavanoids", "Nonflavanoid phenols", "Proanthocyanins", "Color intensity", "Hue", "OD280/OD315 of diluted wines", "Proline")
+```
+
+### b: Check the number of wines within each class
+
+Firstly use "data_wine\["Class"\]" to get all classes of wine.
+
+And use function "table" to check the number of wines within each class.
+
+Compared with the number from wine.names, the number we got from R is correct.
+
+```{R}
+table(data_wine["Class"])
+```
+
+### c: problem sets
+
+##### 1 What is the correlation between alcohol content and color intensity?
+
+From the table below, alcohol content is always bigger than color intensity.
+
+Besides, we can use function "cor" to compute the correlation coefficient, which is 0.5463642. And we can use a scatter plot to verify the correlation. In fact, there is no direct relationship between these two attribute.
+
+```{R}
+c("mean_of_Alcohol" = mean((data_wine["Alcohol"])[[1]]), "mean_of_color_intensity" = mean((data_wine["Color intensity"])[[1]]), "correlation_coefficient" = cor((data_wine["Alcohol"])[[1]], (data_wine["Color intensity"])[[1]]))
+plot((data_wine["Alcohol"])[[1]], (data_wine["Color intensity"])[[1]], main="Scatter Plot of Alcohol and color intensity", xlab="Alcohol", ylab="Color intensity", pch=19)
+abline((data_wine["Alcohol"])[[1]], (data_wine["Color intensity"])[[1]])
+cor_test = cor.test((data_wine["Alcohol"])[[1]], (data_wine["Color intensity"])[[1]])
+print(cor_test)
+```
+
+##### 2 Which class has the highest correlation? Which has the lowest?
+
+Use function cor to get the classes with highest and lowest classes:
+
+```{R}
+cor(data_wine)
+
+```
+
+So Nonflavanoid phenols and Proanthocyanins have highest correlation based on cor value 0.864563500095115; OD280/OD315 of diluted wines and Ash have thelowest correlation based on cor value 0.003911231.
+
+##### 3 What is the alcohol content of the wine with the highest color intensity?
+
+```{R}
+data_wine[which(data_wine$Alcohol == max(data_wine$Alcohol)), ]["Color intensity"]
+
+```
+
+##### 4 What percentage of wines had a higher content of proanthocyanins compare to ash?
+
+The percent is about 8.42%:
+
+```{R}
+nrow(data_wine[which(data_wine$Proanthocyanins > data_wine$"Ash"), ])/nrow(data_wine)
+```
+
+#### d: Create a table identifying the average value of each variable, providing one row for the overall average, and one row per class with class averages. (This table does not need to be “fancy” but should clearly identify what each value represents.)
+
+```{R}
+apply(data_wine[c("Alcohol", "Malic acid", "Ash", "Alcalinity of ash", "Magnesium", "Total phenols", "Flavanoids", "Nonflavanoid phenols", "Proanthocyanins", "Color intensity", "Hue", "OD280/OD315 of diluted wines", "Proline")], 2, mean)
+```
+
+#### e: Carry out a series of t-tests to examine whether the level of phenols differs across the three classes. Present the R output and interpret the results. (You may use an existing R function to carry out the t-test, or for **minor extra credit**, manually write your own calculation of the t-test p-values.)
+
+Use the R function: t.test(), and devide classes into 3 groups: 12, 23, 13
+
+```{R}
+names(data_wine) = c("Class", "Alcohol", "Malic acid", "Ash", "Alcalinity of ash", "Magnesium", "Tp", "Flavanoids", "Nonflavanoid phenols", "Proanthocyanins", "Color intensity", "Hue", "OD280/OD315 of diluted wines", "Proline")
+dat12 = data_wine[which(data_wine$Class == 1 | data_wine$Class == 2),]
+dat13 = data_wine[which(data_wine$Class == 1 | data_wine$Class == 3),]
+dat23 = data_wine[which(data_wine$Class == 3 | data_wine$Class == 2),]
+t.test(Tp~Class, dat12)
+t.test(Tp~Class, dat13)
+t.test(Tp~Class, dat23)
+```
+
+All of p-values are smaller than 0.05, which means differences of the level of phenols across from three classes are big.
+
+Additionally, differences between means are all in the 95 percent confidence interval. It means that values of each groups are same with the whole area.
+
+And use R to build a function to compute t value, but didn't find the way to compute p value:
+
+```{R}
+myT <-function(val1, val2, data){
+  # val1 is the target var to compute t value
+  # val2 is the name of classes, which is a binary var in data
+  se1 = data[which(data[val2] == data[val2][[1]][1]),][val1]
+  se2 = data[which(data[val2] != data[val2][[1]][1]),][val1]
+  t=(lapply(se1, mean)[[1]]-lapply(se2, mean)[[1]])/sqrt(lapply(se1,sd)[[1]]**2/length(se1)+lapply(se2,sd)[[1]]**2/length(se2))
+  return(list("t value"=t))
+}
+
+myT("Tp", "Class", dat12)
+```
+
+### Problem 2 - AskAManager.org Data Please download this dataset. It is from an ongoing salary survey from AskAManager.org. We’re going to do some data cleaning to prepare it for an analysis.
+
+#### a: Import the data into a data.frame in R. As with the wine data, you may download the data outside of your submission, but importation should take place inside the problem set submission.
+
+```{R}
+data_aam = read.csv("./AskAManager.csv", head = 1)
+```
+
+#### b: Clean up the variable names. Simplify them.
+
+Rename them and print renamed names:
+
+```{R}
+names(data_aam)<-c("X", "Time", "Age", "Industry", "Job", "Job_more", "Salary", "ExtraSalary", "Currency", "CurrencyO", "IncomeContext", "Country", "State", "City", "OverallYear", "FieldYear", "Education", "Gender", "Race")
+names(data_aam)
+```
+
+#### c: Restrict the data to those being paid in US dollars (USD). Show that it worked by confirming the number of observations before and after restricting the data.
+
+Use which to choose items that have value "USD" in "Currency", and print the number of rows of original data frame and of filtered data frame.
+
+```{R}
+data_aam_us = data_aam[which(data_aam$Currency == "USD"),]
+print(nrow(data_aam))
+print(nrow(data_aam_us))
+```
+
+#### d: Assume no one starts working before age 18. Eliminate any rows for which their age, years of experience in their field, and years of experience total are impossible. Again, confirm the number of observations. (Hint: Making these variables factor may make your life easier.)
+
+Because age given is a range of character format, use "dic_age" which likes dictionary in python to fastly invert age character to integer. Use a "dic_year" for working years too in a similar way.
+
+Secondly, filter them and print the number of rows.
+
+```{R}
+dic_age = c("18-24"=24, "25-34"=34, "35-44"=44, "45-54"=54, "55-64"=64, "65 or over"=1000)
+dic_years = c("5-7 years" = 5, "8 - 10 years" = 8, "2 - 4 years" = 2, "21 - 30 years" = 21, "11 - 20 years"=11, "1 year or less"=0, "31 - 40 years"=31, "41 years or more"=41)
+data_aam_age = data_aam[which(dic_age[data_aam$Age] > 17+dic_years[data_aam$OverallYear]),]
+data_aam_age = data_aam_age[which(dic_age[data_aam_age$Age] > 17+dic_years[data_aam_age$FieldYear]),]
+print(nrow(data_aam))
+print(nrow(data_aam_age))
+```
+
+#### e: A lot of the incomes are likely false. Eliminate any rows with extremely low or extremely high salaries. I’ll leave the decision of what thresholds to use up to you; you could choose to eliminate only impossible values, or you could restrict the sample to eliminate the extreme values even if they are realistic (e.g. removing the billionaires or the folks making \< \$1,000 per year). You must justify your choice, along with either a cited source or an exploration the data, or some combination.Report your final sample size.
+
+First, I think it is necessary to analyse the data. Base on the summary and graph, here are some etremely big values which I need to delete.
+
+```{R}
+summary(data_aam$Salary)
+hist(data_aam$Salary)
+boxplot(data_aam$Salary)
+```
+
+After deleting rows with salary higher than 1e+9, analyse the data again. Because here are still lots of extremely values, choose to delete rows with salary higher than 1e+7 based on "3rd Qu" value. Finally, max value is 8800000 and 3rd Qu value is 109575, and it seems more reliable.
+
+```{R}
+data_aam_sa=data_aam[which(data_aam$Salary < 1e+9),]
+summary(data_aam_sa$Salary)
+hist(data_aam_sa$Salary)
+boxplot(data_aam_sa$Salary)
+
+data_aam_sa = data_aam[which(data_aam$Salary < 1e+8),]
+summary(data_aam_sa$Salary)
+hist(data_aam_sa$Salary)
+boxplot(data_aam_sa$Salary)
+
+data_aam_sa = data_aam[which(data_aam$Salary < 1e+7),]
+nrow(data_aam_sa)
+summary(data_aam_sa$Salary)
+hist(data_aam_sa$Salary)
+boxplot(data_aam_sa$Salary)
+```
+
+About the extremely small values, based on the sorted salary list, values less than 100 are most likely to be false. Moreover, values of salary which is less than 2000 are also difficult to understand.
+
+Here are codes, but output is too big, so they are annotations.
+
+```{R}
+# sort(data_aam_sa$Salary)
+# table(data_aam_sa$Salary)
+```
+
+So finally delete rows with salary bigger than 1e+7 and smaller than 2000, size is 27932.
+
+```{R}
+data_aam_sa = data_aam[which(data_aam$Salary > 2000 & data_aam$Salary < 1e+7),]
+nrow(data_aam_sa)
+```
+
+### Problem 3 - Palindromic Numbers Palindromic numbers are integers that are equal to the reverse of their digits. For example, 59195 is palindromic, whereas 59159 is not.
+
+#### a: Write function isPalindromic that checks if a given positive integer is a palindrome. Be sure to provide a reasonable error on an invalid input. Be sure to document your function (see instructions above).
+
+Here used c() and rev function to finish it:
+
+```{R}
+isPalindromic <- function(inter){
+  an = inter
+  li_nu = c()
+  lis = c()
+  # save int as a list
+  while(an > 0){
+    li_nu = append(li_nu, an %% 10)
+    an = (an-(an%%10)) / 10
+  }
+  # try reverse
+  if(all(rev(li_nu) == li_nu)){
+    lis = list("isPalindromic"=TRUE, "reversed"= inter)
+  }
+  else{
+    ans = 0
+    # return reverse number if not palindromic
+    for(i in 0:length(li_nu)){
+      ans = ans + li_nu[length(li_nu)-i]*(10**i)
+      if(i == length(li_nu)-1){
+        lis = list("isPalindromic"=FALSE, "reversed" =ans)
+      }
+    }
+    
+  }
+  return(lis)
+}
+
+isPalindromic(212)
+isPalindromic(59159)
+isPalindromic(59195)
+```
+
+#### b: Create a function nextPalindrome that finds the next palindromic number strictly greater than the input. Be sure to provide a reasonable error on an invalid input.
+
+```{R}
+nextPalindrome <- function(inter){
+  if(isPalindromic(inter)$isPalindromic){
+    return(inter)
+  }
+  while(1){
+    inter = inter + 1
+    if(isPalindromic(inter)$isPalindromic){
+      return(inter)
+    }
+  }
+}
+```
+
+#### c: Use these functions to find the next palindrome for each of the following:
+
+i.  391
+
+    ```{R}
+    nextPalindrome(391)
+    ```
+
+ii. 9928
+
+    ```{R}
+    nextPalindrome(9928)
+    ```
+
+iii. 19272719
+
+```{R}
+nextPalindrome(19272719)
+```
+
+iv. 109
+
+    ```{R}
+    nextPalindrome(109)
+    ```
+
+v.  2
+
+    ```{R}
+    nextPalindrome(2)
+    ```
