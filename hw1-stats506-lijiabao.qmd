@@ -4,7 +4,6 @@ author: "JiabaoLi"
 format: pdf
 editor: visual
 execute: 
-  echo: false
   message: false
   warning: false
 ---
@@ -26,7 +25,6 @@ Finally use function "names" to label the data.
 ```{r}
 data_wine = data.frame(read.table("./wine/wine.data", sep = ','))
 names(data_wine) = c("Class", "Alcohol", "Malic acid", "Ash", "Alcalinity of ash", "Magnesium", "Total phenols", "Flavanoids", "Nonflavanoid phenols", "Proanthocyanins", "Color intensity", "Hue", "OD280/OD315 of diluted wines", "Proline")
-data_wine
 ```
 
 ### b: Check the number of wines within each class
@@ -50,7 +48,6 @@ From the table below, alcohol content is always bigger than color intensity.
 Besides, we can use function "cor" to compute the correlation coefficient, which is 0.5463642. And we can use a scatter plot to verify the correlation. In fact, there is no direct relationship between these two attribute.
 
 ```{R}
-data_wine[c("Alcohol", "Color intensity")]
 c("mean_of_Alcohol" = mean((data_wine["Alcohol"])[[1]]), "mean_of_color_intensity" = mean((data_wine["Color intensity"])[[1]]), "correlation_coefficient" = cor((data_wine["Alcohol"])[[1]], (data_wine["Color intensity"])[[1]]))
 plot((data_wine["Alcohol"])[[1]], (data_wine["Color intensity"])[[1]], main="Scatter Plot of Alcohol and color intensity", xlab="Alcohol", ylab="Color intensity", pch=19)
 abline((data_wine["Alcohol"])[[1]], (data_wine["Color intensity"])[[1]])
@@ -129,7 +126,6 @@ myT("Tp", "Class", dat12)
 
 ```{R}
 data_aam = read.csv("./AskAManager.csv", head = 1)
-data_aam
 ```
 
 #### b: Clean up the variable names. Simplify them.
@@ -212,8 +208,6 @@ data_aam_sa = data_aam[which(data_aam$Salary > 2000 & data_aam$Salary < 1e+7),]
 nrow(data_aam_sa)
 ```
 
-#### f:(Optional) If you want to see this analysis through for no credit, answer the research question of whether there is a statistical association between education and salary, controlling for years of experience.
-
 ### Problem 3 - Palindromic Numbers Palindromic numbers are integers that are equal to the reverse of their digits. For example, 59195 is palindromic, whereas 59159 is not.
 
 #### a: Write function isPalindromic that checks if a given positive integer is a palindrome. Be sure to provide a reasonable error on an invalid input. Be sure to document your function (see instructions above).
@@ -285,7 +279,7 @@ ii. 9928
 
 iii. 19272719
 
-```{{R}}
+```{R}
 nextPalindrome(19272719)
 ```
 
