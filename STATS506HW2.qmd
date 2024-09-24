@@ -1,0 +1,185 @@
+---
+title: "STATS506HW2"
+author: "JiabaoLi"
+format: pdf
+editor: visual
+execute: 
+  message: false
+  warning: false
+---
+
+## **Problem 1 - Dice Game**
+
+### a. 
+-   Version 1: Implement this game using a loop.
+
+```{R}
+play_dice1 <- function(dice_times){
+  winning = 0
+  for (i in 1:dice_times){
+    dic_num = sample(1:6, 1, replace = TRUE)
+    if (dic_num == 3 || dic_num == 5){
+      winning = winning + 2 * dic_num
+    }else{
+      winning = winning - 2
+    }
+  }
+  return(winning)
+}
+```
+
+-   Version 2: Implement this game using built-in R vectorized functions.
+
+```{R}
+
+play_dice_sub <- function(dic_number){
+  for(i in seq_along(dic_number)){
+    if(dic_number[i] == 3 || dic_number[i] == 5){
+      dic_number[i] = 2 * dic_number[i]
+    }else{
+      dic_number[i] = -2
+    }
+  }
+  return(dic_number)
+}
+
+play_dice2 <- function(dice_times){
+  dic_numbers = sample(1:6, dice_times, replace = TRUE)
+  winning = play_dice_sub(dic_numbers)
+  return(sum(winning))
+}
+```
+
+-   Version 3: Implement this by rolling all the dice into one and collapsing the die rolls into a single `table()`. (Hint: Be careful indexing the table - what happens if you make a table of a single dice roll? You may need to look to other resources for how to solve this.)
+
+```{R}
+play_dice2 <- function(dice_times){
+  dic_numbers = sample(1:6, dice_times, replace = TRUE)
+  winning = ifelse(dic_numbers == 3 || dice_numbers == 5, 2 * dic_numbers, -2)
+  return(winning)
+}
+```
+
+-   Version 4: Implement this game by using one of the “`apply`” functions.
+
+```{R}
+play_dice4 <- function(dice_times){
+  dic_numbers = sample(1:6, dice_times, replace = TRUE)
+  winning = sum(apply(dic_numbers, function(dic_number){
+    if(dic_number == 3 || dic_number == 5){
+      return(2*dic_number)
+    }else{
+      return(-2)
+    }
+  }))
+  return(winning)
+}
+```
+
+b.  Demonstrate that all versions work. Do so by running each a few times, once with an input a 3, and once with an input of 3,000.
+
+The return number can be (-20, -14, -8, -2, 4, 10, 16, 22, 28, 34, 40). These functions are right.
+
+```{R}
+play_dice1(3)
+play_dice1(3000)
+
+play_dice2(3)
+play_dice2(3000)
+
+play_dice3(3)
+play_dice3(3000)
+
+play_dice4(3)
+play_dice4(3000)
+```
+
+c.  Demonstrate that the four versions give the same result. Test with inputs 3 and 3,000. (You will need to add a way to control the randomization.)
+
+Use set.seed to check if the out put are same.
+
+```{R}
+set.seed(2024)
+play_dice1(3)
+play_dice2(3000)
+
+play_dice2(3)
+play_dice2(3000)
+
+play_dice3(3)
+play_dice3(3000)
+
+play_dice4(3)
+play_dice4(3000)
+```
+
+d.  Use the *microbenchmark* package to clearly demonstrate the speed of the implementations. Compare performance with a low input (1,000) and a large input (100,000). Discuss the results
+
+```{R}
+library(microbenchmark)
+
+```
+
+e.  Do you think this is a fair game? Defend your decision with evidence based upon a Monte Carlo simulation.
+
+## **Problem 2 - Linear Regression**
+
+Download the cars data set available at <https://corgis-edu.github.io/corgis/csv/cars/>. The goal is to examine the relationship between torque and highway gas mileage.
+
+a.  The names of the variables in this data are way too long. Rename the columns of the data to more reasonable lengths.
+
+```{R}
+data_cars = read.csv("cars.csv")
+names(data_cars) = c("H", "L", "W", "DriveLine", "EngType", "Hybrid", "Gears", "Transmission", 
+                     "City", "FuelType", "Highway", "class", "ID", "Make", "ModelYear", "Year",
+                     "EngHorsepower", "Troque")
+names(data_cars)
+```
+
+b.  Restrict the data to cars whose Fuel Type is “Gasoline”.
+
+Show the number of rows to identify I succefully constrain it.
+
+```{R}
+data_cars_gasoline = data_cars[which(data_cars$FuelType == "Gasoline"),]
+c(nrow(data_cars), nrow(data_cars_gasoline))
+```
+
+c.  Examine the distribution of highway gas mileage. Consider whether a transformation could be used. If so, generate the transformed variable and *use this variable going forward*. If not, provide a short justification.
+
+From the graph generated with function "hist" and "boxplot", there is a big extreme number. Use sort to check and found it is the only special point. So omit it to avoid its bad effect to the regression.
+
+```{R}
+hist(data_cars$Highway)
+boxplot(data_cars$Highway)
+sort(hig, decreasing = TRUE)
+```
+
+Plot again and it seems better now.
+```{R}
+data_cars = data_cars[which(data_cars$Highway != 223),]
+boxplot(data_cars$Highway)
+```
+
+
+d.  Fit a linear regression model predicting MPG on the highway. The predictor of interest is torque. Control for:
+
+    -   The horsepower of the engine
+
+    -   All three dimensions of the car
+
+    -   The year the car was released, as a categorical variable.
+
+    Briefly discuss the estimated relationship between torque and highway MPG. Be precise about the interpretation of the estimated coefficient.
+    
+```{R}
+lm_model = lm(Highway ~ EngHorsepower + H + L + W + factor(ModelYear), data = data_cars)
+lm_model
+
+```
+
+e.  It seems reasonable that there may be an interaction between torque and horsepower. Refit the model (with `lm`) and generate an interaction plot, showing how the relationship between torque and MPG changes as horsepower changes. Choose reasonable values of torque, and show lines for three different reasonable values of horsepower.
+
+    (Hint: If you choose to use the *interactions* package for this, look at the `at =` argument to help with how year comes into play - choose a reasonable single value for year.
+
+f.  Calculate β^ from d. manually (without using `lm`) by first creating a proper design matrix, then using matrix algebra to estimate β. Confirm that you get the same result as `lm` did prior.
