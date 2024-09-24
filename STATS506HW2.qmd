@@ -10,7 +10,8 @@ execute:
 
 ## **Problem 1 - Dice Game**
 
-### a. 
+### a.
+
 -   Version 1: Implement this game using a loop.
 
 ```{R}
@@ -54,9 +55,7 @@ play_dice2 <- function(dice_times){
 
 ```{R}
 play_dice2 <- function(dice_times){
-  dic_numbers = sample(1:6, dice_times, replace = TRUE)
-  winning = ifelse(dic_numbers == 3 || dice_numbers == 5, 2 * dic_numbers, -2)
-  return(winning)
+  
 }
 ```
 
@@ -156,11 +155,11 @@ sort(hig, decreasing = TRUE)
 ```
 
 Plot again and it seems better now.
+
 ```{R}
 data_cars = data_cars[which(data_cars$Highway != 223),]
 boxplot(data_cars$Highway)
 ```
-
 
 d.  Fit a linear regression model predicting MPG on the highway. The predictor of interest is torque. Control for:
 
@@ -171,7 +170,7 @@ d.  Fit a linear regression model predicting MPG on the highway. The predictor o
     -   The year the car was released, as a categorical variable.
 
     Briefly discuss the estimated relationship between torque and highway MPG. Be precise about the interpretation of the estimated coefficient.
-    
+
 ```{R}
 lm_model = lm(Highway ~ EngHorsepower + H + L + W + factor(ModelYear), data = data_cars)
 lm_model
@@ -182,4 +181,4 @@ e.  It seems reasonable that there may be an interaction between torque and hors
 
     (Hint: If you choose to use the *interactions* package for this, look at the `at =` argument to help with how year comes into play - choose a reasonable single value for year.
 
-f.  Calculate β^ from d. manually (without using `lm`) by first creating a proper design matrix, then using matrix algebra to estimate β. Confirm that you get the same result as `lm` did prior.
+f.  Calculate β\^ from d. manually (without using `lm`) by first creating a proper design matrix, then using matrix algebra to estimate β. Confirm that you get the same result as `lm` did prior.
