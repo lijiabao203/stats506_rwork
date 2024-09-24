@@ -1,3 +1,4 @@
 # stats506_rwork
 
-9/12/2024: Can't change R to update, push the doc by my own.
+- PS1 is hw1-stats506-lijiabao.qmd and corresponding files.
+- PS2 is hw2-stats506-lijiabao.qmd and corresponding files.
