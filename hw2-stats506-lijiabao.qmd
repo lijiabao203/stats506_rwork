@@ -1,5 +1,5 @@
 ---
-title: "STATS506HW2"
+title: "hw2-stats506-lijiabao"
 author: "JiabaoLi"
 format: pdf
 editor: visual
