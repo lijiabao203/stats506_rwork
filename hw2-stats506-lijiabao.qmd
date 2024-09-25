@@ -12,13 +12,36 @@ execute:
 
 ### a.
 
+First, construct an error test function to make sure the input number is a positive integer:
+
+```{R}
+errorread_pi <- function(inpu){
+  # input is the dice numbers
+  # will cause stop if the input is not a positive integer
+  number = suppressWarnings(as.integer(inpu))
+  if (number != inpu){
+    stop("Error input, please input an integer.")
+  }else if(is.na(number)){
+    stop("Error input, input is NA")
+  }else if(number <= 0) {
+    stop("Error input, input is not positive.")
+  }
+  return(TRUE)
+}
+```
+
+For all these versions of functions, the input is the number of dice to roll. and the output is total winnings
+
 -   Version 1: Implement this game using a loop.
 
 ```{R}
 play_dice1 <- function(dice_times){
+  errorread_pi(dice_times)
+  
   winning = 0
-  for (i in 1:dice_times){
-    dic_num = sample(1:6, 1, replace = TRUE)
+  # use function sample to generate random value of the outcome of the dice
+  dice_numbers = sample(1:6, dice_times, replace = TRUE)
+  for (dic_num in dice_numbers){
     if (dic_num == 3 || dic_num == 5){
       winning = winning + 2 * dic_num
     }else{
@@ -34,6 +57,9 @@ play_dice1 <- function(dice_times){
 ```{R}
 
 play_dice_sub <- function(dic_number){
+  # this is a built-in R vectorized functions
+  # the input is a vector or a number, which should be the values of dices
+  # the output should be the winnings for each dice
   for(i in seq_along(dic_number)){
     if(dic_number[i] == 3 || dic_number[i] == 5){
       dic_number[i] = 2 * dic_number[i]
@@ -41,12 +67,17 @@ play_dice_sub <- function(dic_number){
       dic_number[i] = -2
     }
   }
+  
   return(dic_number)
 }
 
 play_dice2 <- function(dice_times){
+  errorread_pi(dice_times)
+  
+  # generate random values of dices via function sample
   dic_numbers = sample(1:6, dice_times, replace = TRUE)
   winning = play_dice_sub(dic_numbers)
+  
   return(sum(winning))
 }
 ```
@@ -54,8 +85,19 @@ play_dice2 <- function(dice_times){
 -   Version 3: Implement this by rolling all the dice into one and collapsing the die rolls into a single `table()`. (Hint: Be careful indexing the table - what happens if you make a table of a single dice roll? You may need to look to other resources for how to solve this.)
 
 ```{R}
-play_dice2 <- function(dice_times){
+play_dice3 <- function(dice_times){
+  errorread_pi(dice_times)
+  dice_numbers = sample(1:6, dice_times, replace = TRUE)
   
+  dice_numbers_table = table(dice_numbers)
+  # Calculate winnings using cal_winnings to show the winnings of items in table
+  cal_winnings = ifelse(as.numeric(names(dice_numbers_table)) %in% c(3, 5), 
+                     2 * as.numeric(names(dice_numbers_table)), -2)
+  # use winnings of specific dice values times 
+  # times these values occur to get the answer
+  winnings = sum(cal_winnings * dice_numbers_table)
+  
+  return(winnings)
 }
 ```
 
@@ -63,34 +105,31 @@ play_dice2 <- function(dice_times){
 
 ```{R}
 play_dice4 <- function(dice_times){
+  errorread_pi(dice_times)
+  
   dic_numbers = sample(1:6, dice_times, replace = TRUE)
-  winning = sum(apply(dic_numbers, function(dic_number){
+  # apply values to the function like play_dice_sub in version 2
+  winning = sum(sapply(dic_numbers, function(dic_number){
     if(dic_number == 3 || dic_number == 5){
       return(2*dic_number)
     }else{
       return(-2)
     }
   }))
+  
   return(winning)
 }
 ```
 
 b.  Demonstrate that all versions work. Do so by running each a few times, once with an input a 3, and once with an input of 3,000.
 
-The return number can be (-20, -14, -8, -2, 4, 10, 16, 22, 28, 34, 40). These functions are right.
+Check the function with input: 3, 30, 300, 3000
 
 ```{R}
-play_dice1(3)
-play_dice1(3000)
-
-play_dice2(3)
-play_dice2(3000)
-
-play_dice3(3)
-play_dice3(3000)
-
-play_dice4(3)
-play_dice4(3000)
+c(play_dice1(3), play_dice1(30), play_dice1(300), play_dice1(3000))
+c(play_dice1(3), play_dice1(30), play_dice1(300), play_dice1(3000))
+c(play_dice1(3), play_dice1(30), play_dice1(300), play_dice1(3000))
+c(play_dice1(3), play_dice1(30), play_dice1(300), play_dice1(3000))
 ```
 
 c.  Demonstrate that the four versions give the same result. Test with inputs 3 and 3,000. (You will need to add a way to control the randomization.)
@@ -100,23 +139,48 @@ Use set.seed to check if the out put are same.
 ```{R}
 set.seed(2024)
 play_dice1(3)
-play_dice2(3000)
+set.seed(2024)
+play_dice1(3000)
 
+set.seed(2024)
 play_dice2(3)
+set.seed(2024)
 play_dice2(3000)
 
+set.seed(2024)
 play_dice3(3)
+set.seed(2024)
 play_dice3(3000)
 
+set.seed(2024)
 play_dice4(3)
+set.seed(2024)
 play_dice4(3000)
 ```
 
 d.  Use the *microbenchmark* package to clearly demonstrate the speed of the implementations. Compare performance with a low input (1,000) and a large input (100,000). Discuss the results
 
+The function using loop is the fastest, the function using vector is second fastest, the function using table is third fastest and the function using apply function is the slowest. It's apparent based on the table of summary of the run time test of 100 times test.
+
+I think the reason is that easier struct is more efficient when solving problems. But methods like using apply function can solve more complex problems, which is still useful and easy to use and understand.
+
 ```{R}
 library(microbenchmark)
-
+# use package to judge the speed.
+benchmark_low_input_results <- microbenchmark(
+  Loop = play_dice1(1000),
+  Vector = play_dice2(1000),
+  Table = play_dice3(1000),
+  Apply = play_dice4(1000)
+)
+benchmark_large_input_results <- microbenchmark(
+  Loop = play_dice1(100000),
+  Vector = play_dice2(100000),
+  Table = play_dice3(100000),
+  Apply = play_dice4(100000)
+)
+print(benchmark_low_input_results)
+print(benchmark_large_input_results)
 ```
 
 e.  Do you think this is a fair game? Defend your decision with evidence based upon a Monte Carlo simulation.
@@ -137,7 +201,7 @@ names(data_cars)
 
 b.  Restrict the data to cars whose Fuel Type is “Gasoline”.
 
-Show the number of rows to identify I succefully constrain it.
+Show the number of rows to identify I successfully constrain it.
 
 ```{R}
 data_cars_gasoline = data_cars[which(data_cars$FuelType == "Gasoline"),]
@@ -179,6 +243,10 @@ lm_model
 
 e.  It seems reasonable that there may be an interaction between torque and horsepower. Refit the model (with `lm`) and generate an interaction plot, showing how the relationship between torque and MPG changes as horsepower changes. Choose reasonable values of torque, and show lines for three different reasonable values of horsepower.
 
-    (Hint: If you choose to use the *interactions* package for this, look at the `at =` argument to help with how year comes into play - choose a reasonable single value for year.
+    (Hint: If you choose to use the *interactions* package for this, look at the `at =` argument to help with how year comes into play - choose a reasonable single value for year.)
+
+    ```{R}
+
+    ```
 
 f.  Calculate β\^ from d. manually (without using `lm`) by first creating a proper design matrix, then using matrix algebra to estimate β. Confirm that you get the same result as `lm` did prior.
