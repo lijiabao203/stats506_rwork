@@ -8,6 +8,8 @@ execute:
   warning: false
 ---
 
+link of github: https://github.com/lijiabao203/stats506_rwork
+
 ## **Problem 1 - Dice Game**
 
 ### a.
