@@ -189,6 +189,16 @@ print(benchmark_large_input_results)
 
 ### e.  Do you think this is a fair game? Defend your decision with evidence based upon a Monte Carlo simulation.
 
+From the expectation, $E(total winnings)=-2\times\frac{2}{3}+6\times\frac16+10\times\frac16=\frac43$, which means this game is good for player because they can earn money from the statistical perspective.
+
+Here is the Monte Carlo simulation: compute 1000000 times play_dice(1) and compute the mean and std.
+```{R}
+MC = replicate(1000000, play_dice1(1))
+c("mean"=mean(MC), "std"=sd(MC))
+```
+
+From the outcome of the MC simulation, this is not a fair game while players are more likely to get benefit.
+
 ## **Problem 2 - Linear Regression**
 
 Download the cars data set available at <https://corgis-edu.github.io/corgis/csv/cars/>. The goal is to examine the relationship between torque and highway gas mileage.
@@ -240,7 +250,7 @@ skewness(data_cars$Highway)
 kurtosis(data_cars$Highway)
 ```
 
-d.  Fit a linear regression model predicting MPG on the highway. The predictor of interest is torque. Control for:
+### d.  Fit a linear regression model predicting MPG on the highway. The predictor of interest is torque. Control for:
 
     -   The horsepower of the engine
 
@@ -250,7 +260,7 @@ d.  Fit a linear regression model predicting MPG on the highway. The predictor o
 
     Briefly discuss the estimated relationship between torque and highway MPG. Be precise about the interpretation of the estimated coefficient.
     
-The coefficient for torque means how much highway MPG changes with a one-unit increase in torque, when other variables in the model are stable. In this model, while the coefficient is -3.307053e-05 , it means that for every additional unit of torque, the highway MPG decreases by -3.307053e-05 , while all else variables are not changed.
+The coefficient for torque means how much highway MPG changes with a one-unit increase in torque, when other variables in the model are stable. In this model, while the coefficient is -3.307053e-05 , it means that for every additional unit of torque, the highway MPG decreases by 3.307053e-05 , while all else variables are not changed.
 
 ```{R}
 lm_model = lm(Highway ~ Torque + EngHorsepower + H + L + W + 
@@ -258,7 +268,7 @@ lm_model = lm(Highway ~ Torque + EngHorsepower + H + L + W +
 lm_model[["coefficients"]]["Torque"]
 ```
 
-e.  Refit the model (with `lm`) and generate an interaction plot
+### e.  Refit the model (with `lm`) and generate an interaction plot
     
 Firstly, use lm function to refit the model:
 
