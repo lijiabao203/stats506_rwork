@@ -90,7 +90,7 @@ play_dice3 <- function(dice_times){
   dice_numbers = sample(1:6, dice_times, replace = TRUE)
   
   dice_numbers_table = table(dice_numbers)
-  # Calculate winnings using cal_winnings to show the winnings of items in table
+  # Calculate winnings using cal_winnings to show them of items in table
   cal_winnings = ifelse(as.numeric(names(dice_numbers_table)) %in% c(3, 5), 
                      2 * as.numeric(names(dice_numbers_table)), -2)
   # use winnings of specific dice values times 
@@ -121,7 +121,7 @@ play_dice4 <- function(dice_times){
 }
 ```
 
-b.  Demonstrate that all versions work. Do so by running each a few times, once with an input a 3, and once with an input of 3,000.
+### b.  Demonstrate that all versions work. Do so by running each a few times, once with an input a 3, and once with an input of 3,000.
 
 Check the function with input: 3, 30, 300, 3000
 
@@ -132,7 +132,7 @@ c(play_dice1(3), play_dice1(30), play_dice1(300), play_dice1(3000))
 c(play_dice1(3), play_dice1(30), play_dice1(300), play_dice1(3000))
 ```
 
-c.  Demonstrate that the four versions give the same result. Test with inputs 3 and 3,000. (You will need to add a way to control the randomization.)
+### c.  Demonstrate that the four versions give the same result. Test with inputs 3 and 3,000. (You will need to add a way to control the randomization.)
 
 Use set.seed to check if the out put are same.
 
@@ -158,7 +158,9 @@ set.seed(2024)
 play_dice4(3000)
 ```
 
-d.  Use the *microbenchmark* package to clearly demonstrate the speed of the implementations. Compare performance with a low input (1,000) and a large input (100,000). Discuss the results
+They are same, so they give the same result.
+
+### d.  Use the *microbenchmark* package to clearly demonstrate the speed of the implementations. Compare performance with a low input (1,000) and a large input (100,000). Discuss the results
 
 The function using loop is the fastest, the function using vector is second fastest, the function using table is third fastest and the function using apply function is the slowest. It's apparent based on the table of summary of the run time test of 100 times test.
 
@@ -167,13 +169,13 @@ I think the reason is that easier struct is more efficient when solving problems
 ```{R}
 library(microbenchmark)
 # use package to judge the speed.
-benchmark_low_input_results <- microbenchmark(
+benchmark_low_input_results = microbenchmark(
   Loop = play_dice1(1000),
   Vector = play_dice2(1000),
   Table = play_dice3(1000),
   Apply = play_dice4(1000)
 )
-benchmark_large_input_results <- microbenchmark(
+benchmark_large_input_results = microbenchmark(
   Loop = play_dice1(100000),
   Vector = play_dice2(100000),
   Table = play_dice3(100000),
@@ -183,46 +185,57 @@ print(benchmark_low_input_results)
 print(benchmark_large_input_results)
 ```
 
-e.  Do you think this is a fair game? Defend your decision with evidence based upon a Monte Carlo simulation.
+### e.  Do you think this is a fair game? Defend your decision with evidence based upon a Monte Carlo simulation.
 
 ## **Problem 2 - Linear Regression**
 
 Download the cars data set available at <https://corgis-edu.github.io/corgis/csv/cars/>. The goal is to examine the relationship between torque and highway gas mileage.
 
-a.  The names of the variables in this data are way too long. Rename the columns of the data to more reasonable lengths.
+### a.  The names of the variables in this data are way too long. Rename the columns of the data to more reasonable lengths.
 
 ```{R}
 data_cars = read.csv("cars.csv")
-names(data_cars) = c("H", "L", "W", "DriveLine", "EngType", "Hybrid", "Gears", "Transmission", 
-                     "City", "FuelType", "Highway", "class", "ID", "Make", "ModelYear", "Year",
-                     "EngHorsepower", "Troque")
+names(data_cars) = c("H", "L", "W", "DriveLine", "EngType", "Hybrid",
+                    "Gears", "Transmission", "City", "FuelType", 
+                    "Highway", "class", "ID", "Make", "ModelYear", 
+                    "Year", "EngHorsepower", "Torque")
 names(data_cars)
 ```
 
-b.  Restrict the data to cars whose Fuel Type is “Gasoline”.
+### b.  Restrict the data to cars whose Fuel Type is “Gasoline”.
 
 Show the number of rows to identify I successfully constrain it.
 
 ```{R}
 data_cars_gasoline = data_cars[which(data_cars$FuelType == "Gasoline"),]
-c(nrow(data_cars), nrow(data_cars_gasoline))
+print(c(nrow(data_cars), nrow(data_cars_gasoline)))
+data_cars = data_cars_gasoline
 ```
 
-c.  Examine the distribution of highway gas mileage. Consider whether a transformation could be used. If so, generate the transformed variable and *use this variable going forward*. If not, provide a short justification.
+### c.  Examine the distribution of highway gas mileage. Consider whether a transformation could be used. If so, generate the transformed variable and *use this variable going forward*. If not, provide a short justification.
 
-From the graph generated with function "hist" and "boxplot", there is a big extreme number. Use sort to check and found it is the only special point. So omit it to avoid its bad effect to the regression.
+From the graph generated with function "hist" and "boxplot", there is a big extreme number.
+And from the summary with the skewness value which is really bigger than 0 and the kurtosis value which is really bigger than 3, more values are at the lower side, which is roughly from 13 to 21, with fewer observations at higher side. It might be difficult to solve the extreme value using transformation, but for the right skewness problem, we can solve it using log transformation.
+
 
 ```{R}
+library(moments)
 hist(data_cars$Highway)
 boxplot(data_cars$Highway)
-sort(hig, decreasing = TRUE)
+head(sort(data_cars$Highway, decreasing = TRUE), 10)
+table(data_cars$Highway)
+summary(data_cars$Highway)
+skewness(data_cars$Highway)
+kurtosis(data_cars$Highway)
 ```
 
-Plot again and it seems better now.
+Plot again and it seems better now because the absolute value of the skewness is lower than 0.5.
 
 ```{R}
-data_cars = data_cars[which(data_cars$Highway != 223),]
+data_cars$Highway = sapply(data_cars$Highway, log)
 boxplot(data_cars$Highway)
+skewness(data_cars$Highway)
+kurtosis(data_cars$Highway)
 ```
 
 d.  Fit a linear regression model predicting MPG on the highway. The predictor of interest is torque. Control for:
@@ -234,19 +247,54 @@ d.  Fit a linear regression model predicting MPG on the highway. The predictor o
     -   The year the car was released, as a categorical variable.
 
     Briefly discuss the estimated relationship between torque and highway MPG. Be precise about the interpretation of the estimated coefficient.
+    
+The coefficient for torque means how much highway MPG changes with a one-unit increase in torque, when other variables in the model are stable. In this model, while the coefficient is -3.307053e-05 , it means that for every additional unit of torque, the highway MPG decreases by -3.307053e-05 , while all else variables are not changed.
 
 ```{R}
-lm_model = lm(Highway ~ EngHorsepower + H + L + W + factor(ModelYear), data = data_cars)
-lm_model
-
+lm_model = lm(Highway ~ Torque + EngHorsepower + H + L + W + 
+                factor(ModelYear), data = data_cars)
+lm_model[["coefficients"]]["Torque"]
 ```
 
-e.  It seems reasonable that there may be an interaction between torque and horsepower. Refit the model (with `lm`) and generate an interaction plot, showing how the relationship between torque and MPG changes as horsepower changes. Choose reasonable values of torque, and show lines for three different reasonable values of horsepower.
+e.  Refit the model (with `lm`) and generate an interaction plot
+    
+Firstly, use lm function to refit the model:
 
-    (Hint: If you choose to use the *interactions* package for this, look at the `at =` argument to help with how year comes into play - choose a reasonable single value for year.)
+```{R}
+interaction_model = lm(Highway ~ Torque * EngHorsepower + H + L + W + 
+                          factor(ModelYear), data = data_cars)
+```
 
-    ```{R}
+Secondly, use interactions package to fit, and choose year as "2012 Volvo XC90"
 
-    ```
+```{R}
+library(interactions)
+# Choose a reasonable year, which has max number of cars data.
+interact_plot(interaction_model, pred = Torque, modx = EngHorsepower, 
+              at = list(ModelYear = "2012 Volvo XC90"))
+```
 
-f.  Calculate β\^ from d. manually (without using `lm`) by first creating a proper design matrix, then using matrix algebra to estimate β. Confirm that you get the same result as `lm` did prior.
+Additionally, if we need to choose the value of EngHorsepower, besides Mean value and +1 SD and -1 SD, 1st Qu and mean and 3rd Qu is also reasonable.
+
+f.  Calculate $\hat\beta$ from d manually.
+
+First, the design matrix $X$ is:
+
+```{R}
+X = model.matrix(~ Torque + EngHorsepower + H + L + W + factor(ModelYear), 
+                  data = data_cars)
+```
+So, we have: $\hat\beta=(X^TX)^{-1}X^TY$
+```{R}
+y = data_cars$Highway
+
+hat_matrix = solve(t(X) %*% X) %*% t(X) %*% y
+```
+
+Second, we need to compare the estimated coefficient computed with design matrix and coefficients computed from lm function. The function all.equal is a good choice:
+
+```{R}
+all.equal(c(hat_matrix), c(as.matrix(lm_model$coefficient)))
+```
+
+These values are the same. So we successfully compute the $\hat\beta$ without using lm function.
