@@ -123,7 +123,7 @@ play_dice4 <- function(dice_times){
 }
 ```
 
-### b.  Demonstrate that all versions work. Do so by running each a few times, once with an input a 3, and once with an input of 3,000.
+### b. Demonstrate that all versions work. Do so by running each a few times, once with an input a 3, and once with an input of 3,000.
 
 Check the function with input: 3, 30, 300, 3000
 
@@ -134,7 +134,7 @@ c(play_dice1(3), play_dice1(30), play_dice1(300), play_dice1(3000))
 c(play_dice1(3), play_dice1(30), play_dice1(300), play_dice1(3000))
 ```
 
-### c.  Demonstrate that the four versions give the same result. Test with inputs 3 and 3,000. (You will need to add a way to control the randomization.)
+### c. Demonstrate that the four versions give the same result. Test with inputs 3 and 3,000. (You will need to add a way to control the randomization.)
 
 Use set.seed to check if the out put are same.
 
@@ -162,7 +162,7 @@ play_dice4(3000)
 
 They are same, so they give the same result.
 
-### d.  Use the *microbenchmark* package to clearly demonstrate the speed of the implementations. Compare performance with a low input (1,000) and a large input (100,000). Discuss the results
+### d. Use the *microbenchmark* package to clearly demonstrate the speed of the implementations. Compare performance with a low input (1,000) and a large input (100,000). Discuss the results
 
 The function using loop is the fastest, the function using vector is second fastest, the function using table is third fastest and the function using apply function is the slowest. It's apparent based on the table of summary of the run time test of 100 times test.
 
@@ -187,11 +187,12 @@ print(benchmark_low_input_results)
 print(benchmark_large_input_results)
 ```
 
-### e.  Do you think this is a fair game? Defend your decision with evidence based upon a Monte Carlo simulation.
+### e. Do you think this is a fair game? Defend your decision with evidence based upon a Monte Carlo simulation.
 
 From the expectation, $E(total winnings)=-2\times\frac{2}{3}+6\times\frac16+10\times\frac16=\frac43$, which means this game is good for player because they can earn money from the statistical perspective.
 
 Here is the Monte Carlo simulation: compute 1000000 times play_dice(1) and compute the mean and std.
+
 ```{R}
 MC = replicate(1000000, play_dice1(1))
 c("mean"=mean(MC), "std"=sd(MC))
@@ -203,7 +204,7 @@ From the outcome of the MC simulation, this is not a fair game while players are
 
 Download the cars data set available at <https://corgis-edu.github.io/corgis/csv/cars/>. The goal is to examine the relationship between torque and highway gas mileage.
 
-### a.  The names of the variables in this data are way too long. Rename the columns of the data to more reasonable lengths.
+### a. The names of the variables in this data are way too long. Rename the columns of the data to more reasonable lengths.
 
 ```{R}
 data_cars = read.csv("cars.csv")
@@ -214,7 +215,7 @@ names(data_cars) = c("H", "L", "W", "DriveLine", "EngType", "Hybrid",
 names(data_cars)
 ```
 
-### b.  Restrict the data to cars whose Fuel Type is “Gasoline”.
+### b. Restrict the data to cars whose Fuel Type is “Gasoline”.
 
 Show the number of rows to identify I successfully constrain it.
 
@@ -224,11 +225,9 @@ print(c(nrow(data_cars), nrow(data_cars_gasoline)))
 data_cars = data_cars_gasoline
 ```
 
-### c.  Examine the distribution of highway gas mileage. Consider whether a transformation could be used. If so, generate the transformed variable and *use this variable going forward*. If not, provide a short justification.
+### c. Examine the distribution of highway gas mileage. Consider whether a transformation could be used. If so, generate the transformed variable and *use this variable going forward*. If not, provide a short justification.
 
-From the graph generated with function "hist" and "boxplot", there is a big extreme number.
-And from the summary with the skewness value which is really bigger than 0 and the kurtosis value which is really bigger than 3, more values are at the lower side, which is roughly from 13 to 21, with fewer observations at higher side. It might be difficult to solve the extreme value using transformation, but for the right skewness problem, we can solve it using log transformation.
-
+From the graph generated with function "hist" and "boxplot", there is a big extreme number. And from the summary with the skewness value which is really bigger than 0 and the kurtosis value which is really bigger than 3, more values are at the lower side, which is roughly from 13 to 21, with fewer observations at higher side. It might be difficult to solve the extreme value using transformation, but for the right skewness problem, we can solve it using log transformation.
 
 ```{R}
 library(moments)
@@ -250,16 +249,18 @@ skewness(data_cars$Highway)
 kurtosis(data_cars$Highway)
 ```
 
-### d.  Fit a linear regression model predicting MPG on the highway. The predictor of interest is torque. Control for:
+### d. Fit a linear regression model predicting MPG on the highway. The predictor of interest is torque. Control for:
 
-    -   The horsepower of the engine
+```         
+-   The horsepower of the engine
 
-    -   All three dimensions of the car
+-   All three dimensions of the car
 
-    -   The year the car was released, as a categorical variable.
+-   The year the car was released, as a categorical variable.
 
-    Briefly discuss the estimated relationship between torque and highway MPG. Be precise about the interpretation of the estimated coefficient.
-    
+Briefly discuss the estimated relationship between torque and highway MPG. Be precise about the interpretation of the estimated coefficient.
+```
+
 The coefficient for torque means how much highway MPG changes with a one-unit increase in torque, when other variables in the model are stable. In this model, while the coefficient is -3.307053e-05 , it means that for every additional unit of torque, the highway MPG decreases by 3.307053e-05 , while all else variables are not changed.
 
 ```{R}
@@ -268,8 +269,8 @@ lm_model = lm(Highway ~ Torque + EngHorsepower + H + L + W +
 lm_model[["coefficients"]]["Torque"]
 ```
 
-### e.  Refit the model (with `lm`) and generate an interaction plot
-    
+### e. Refit the model (with `lm`) and generate an interaction plot
+
 Firstly, use lm function to refit the model:
 
 ```{R}
@@ -296,7 +297,9 @@ First, the design matrix $X$ is:
 X = model.matrix(~ Torque + EngHorsepower + H + L + W + factor(ModelYear), 
                   data = data_cars)
 ```
+
 So, we have: $\hat\beta=(X^TX)^{-1}X^TY$
+
 ```{R}
 y = data_cars$Highway
 
