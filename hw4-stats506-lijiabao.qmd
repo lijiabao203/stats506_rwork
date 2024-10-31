@@ -1,0 +1,235 @@
+---
+title: "hw4-stats506-lijiabao"
+author: "JiabaoLi"
+format: pdf
+editor: visual
+---
+
+> link of github: https://github.com/lijiabao203/stats506_rwork
+
+## **Problem 1 - Tidyverse**
+
+Use the **tidyverse** for this problem. In particular, use piping and **dplyr** as much as you are able. **Note**: Use of any deprecated functions will result in a point loss.
+
+Install and load the package [**nycflights13**](https://cran.r-project.org/package=nycflights13).
+
+### a. Generate a table (which can just be a nicely printed tibble) reporting the mean and median departure delay per airport. Generate a second table (which again can be a nicely printed tibble) reporting the mean and median arrival delay per airport. Exclude any destination with under 10 flights. Do this exclusion through code, not manually.
+
+```         
+Additionally,
+
+-   Order both tables in descending mean delay.
+
+-   Both tables should use the airport *names* not the airport *codes*.
+
+-   Both tables should print all rows.
+```
+
+```{R}
+library(nycflights13)
+library(tidyverse)
+org_and_mm = flights %>% 
+  group_by(origin) %>%
+  filter(n() > 9) %>%
+  summarize(mean(dep_delay, na.rm = T), median(dep_delay, na.rm = T)) %>%
+  ungroup() 
+tab1 = org_and_mm %>%
+  left_join(airports, by = c("origin" = "faa")) %>%
+  select(name,
+         "mean(dep_delay, na.rm = T)",
+         "median(dep_delay, na.rm = T)") %>%
+  rename("airport name" = name,
+         "dep-delay time mean" = "mean(dep_delay, na.rm = T)",
+         "dep-delay time median" = "median(dep_delay, na.rm = T)") %>%
+  arrange(desc(`dep-delay time mean`))
+print(tab1)
+# here is he first table
+
+
+dest_and_mm = flights %>% 
+  group_by(dest) %>%
+  filter(n() > 9) %>%
+  summarize(mean(arr_delay, na.rm = T), median(arr_delay, na.rm = T)) %>%
+  ungroup() 
+tab2 = dest_and_mm %>%
+  left_join(airports, by = c("dest" = "faa")) %>%
+  select(name,
+         "mean(arr_delay, na.rm = T)",
+         "median(arr_delay, na.rm = T)") %>%
+  rename("airport name" = name,
+         "arr-delay time mean" = "mean(arr_delay, na.rm = T)",
+         "ar-delay time median" = "median(arr_delay, na.rm = T)") %>%
+  arrange(desc(`arr-delay time mean`)) 
+print(tab2, n = Inf)
+# here is the second table, and it's kind of long.
+```
+
+Here is a missing airport name, which has dest faa "STT". It may because of a error input of the table or the reason may be that this airport has not been recorded.
+
+```{R}
+any(airports$faa %>% match("STT"))
+```
+
+### b. How many flights did the aircraft model with the fastest average speed take? Produce a tibble with 1 row, and entires for the model, average speed (in MPH) and number of flights.
+
+```{R}
+# calculate the avg speed of each flight first
+avgmph_of_flights = flights %>%
+  group_by(tailnum) %>%
+  summarize(sum(distance) / (sum(hour) + sum(minute) / 60), n()) %>%
+  ungroup() %>%
+  rename("numf" = "n()",
+         "avgsp" = `sum(distance)/(sum(hour) + sum(minute)/60)`)
+
+# calculate divided by flight model
+ans = avgmph_of_flights %>%
+  inner_join(planes, by = "tailnum") %>%
+  group_by(model) %>%
+  summarize(sum(avgsp * numf)/sum(numf), sum(numf)) %>%
+  rename("number of flights" = `sum(numf)`,
+         "average speed in MPH" = `sum(avgsp * numf)/sum(numf)`) %>%
+  select("model", "number of flights", "average speed in MPH") %>%
+  ungroup() %>%
+  arrange(desc(`average speed in MPH`)) %>%
+  head(1)
+ans
+
+```
+
+## **Problem 2 - `get_temp()`**
+
+Use the **tidyverse** for this problem. In particular, use piping and **dplyr** as much as you are able. **Note**: Use of any deprecated functions will result in a point loss.
+
+Load the Chicago NNMAPS data we used in the visualization lectures. Write a function `get_temp()` that allows a user to request the average temperature for a given month. The arguments should be:
+
+-   `month`: Month, either a numeric 1-12 or a string.
+
+-   `year`: A numeric year.
+
+-   `data`: The data set to obtain data from.
+
+-   `celsius`: Logically indicating whther the results should be in celsius. Default `FALSE`.
+
+-   `average_fn`: A function with which to compute the mean. Default is `mean`.
+
+The output should be a numeric vector of length 1. The code inside the function should, as with the rest of this problem, use the **tidyverse**. Be sure to sanitize the input.
+
+Prove your code works by evaluating the following. Your code should produce the result, or a reasonable error message.
+
+```{R}
+nnmaps = read.csv("chicago-nmmaps.csv")
+nnmaps$date = as.Date(nnmaps$date)
+# the inputs and output are listed in the problem.
+get_temp <- function(mon, yea, data, celsius = FALSE, average_fn = mean){
+  tab = data %>% 
+    filter(year == yea, mon == month | mon == month_numeric)
+  # error check, to avoid the situation that can't get any elements.
+  if(nrow(tab) == 0){
+    return("extract null message, please check the year and month message.")
+  }
+  table_all = tab %>%
+    summarize(average_fn(temp)) %>%
+    mutate(not_temp = `average_fn(temp)`*9/5+32)
+  return(ifelse(celsius, table_all %>% select(`average_fn(temp)`), table_all %>% select(not_temp)))
+}
+```
+
+```{R}
+get_temp("Apr", 1999, data = nnmaps) 
+get_temp("Apr", 1999, data = nnmaps, celsius = TRUE) 
+get_temp(10, 1998, data = nnmaps, average_fn = median) 
+get_temp(13, 1998, data = nnmaps) 
+get_temp(2, 2005, data = nnmaps) 
+get_temp("November", 1999, data =nnmaps, celsius = TRUE,          
+  average_fn = function(x) {            
+    x %>% sort -> x      
+    x[2:(length(x) - 1)] %>% mean %>% return          
+  })
+```
+
+## **Problem 3 - Visualization**
+
+Note: This is, intentionally, a very open-ended question. There is no “right” answer. The goal is for you to explore your plotting options, and settle on something reasonable. You can use base R, ggplot, or soemthing else. You’ll likely have to look online for resources on plotting beyond what we covered in class.
+
+This dataset lists characteristics of [art sales](https://springernature.figshare.com/articles/dataset/Buying_a_Work_of_Art_or_an_Artist_Exploring_the_Impact_of_Visual_and_Social_Features_on_Art_Prices/24746268?file=43477980). Download the file named “df_for_ml_improved_new_market” (NOT the “df_for_ml_improved_new_market_1” version!). For each of the following, produce a publication-ready plot which demonstrates the answer to the question. Use your plot to support an argument for your question.
+
+### a. Is there a change in the sales price in USD over time?
+
+### b. Does the distribution of genre of sales across years appear to change?
+
+### c. How does the genre affect the change in sales price over time?
+
+You will be graded on:
+
+i.  Is the type of graph & choice of variables appropriate to answer the question?
+
+ii. Is the graph clear and easy to interpret?
+
+iii. Is the graph publication ready?
+
+**Here start the answer**
+
+a.  
+
+Based on the plot, there is a noticeable trend suggesting that newer items (or items from more recent years) tend to have higher prices. 
+
+```{R}
+artsales = read.csv("df_for_ml_improved_new_market.csv")
+with(artsales, plot(year, price_usd))
+```
+
+b.  
+
+The figure showing the percentage of sales by genre indicates an increase in sales of paintings and "other" in recent years, while sales classified as photography and sculpture have declined. Additionally, the percentage of print sales has experienced a slight increase.
+
+On another note, some sales are classified as both 'other' and additional categories. If we exclude these from the 'other' classification (consider classes beside "other" first), we can analyze the updated plots (two hist plots latter): there is an increase in sales of photography, print, and 'other' categories, while sales of paintings have decreased. Sales of sculpture show slight fluctuations.
+
+```{R}
+ann = artsales %>%
+  select(year, Genre___Others, Genre___Print, Genre___Photography, Genre___Painting, Genre___Sculpture) %>%
+  group_by(year) %>%
+  summarize(sum(Genre___Others)/n(), sum(Genre___Print)/n(), sum(Genre___Photography)/n(), sum(Genre___Painting)/n(), sum(Genre___Sculpture)/n()) %>%
+  rename(other = `sum(Genre___Others)/n()`, print = `sum(Genre___Print)/n()`, photography = `sum(Genre___Photography)/n()`, painting = `sum(Genre___Painting)/n()`, sculpture = `sum(Genre___Sculpture)/n()`)
+with(ann, plot(year, other, type = "l", col = "red"))
+with(ann, lines(year, painting, type = "l", col = "blue"))
+with(ann, lines(year, print, type = "l", col = "green"))
+with(ann, lines(year, photography, type = "l", col = "yellow"))
+with(ann, lines(year, sculpture, type = "l", col = "grey"))
+legend("topright", legend = c("other", "painting", "print", "photography", "sculpture"), 
+       col = c("blue", "red", "green", "yellow", "grey"), lty = 1, lwd = 2)
+title("Percentage of Sales by Genre in Different Years")
+
+library(ggplot2)
+ann = artsales %>%
+  select(year, Genre___Others, Genre___Print, Genre___Photography, Genre___Painting, Genre___Sculpture) %>%
+  mutate(genre = if_else(Genre___Sculpture == 1, "Sculpture", if_else(Genre___Print == 1, "Print", if_else(Genre___Photography == 1, "Photography", if_else(Genre___Painting == 1, "Painting", "Others")))))
+ann = ann[!is.na(ann$genre), ]
+ggplot(ann, aes(x = year, fill = genre)) +
+  geom_histogram(position = "fill")
+ggplot(ann, aes(x = year, fill = genre)) +
+  geom_histogram(position = "jitter")
+```
+
+c.  
+Although for all genres of sales, prices all have rising trends in these years, we can see in the first plot, thre are lots of green points with higher prices in latter years. And in the latter figure, the mean value can help us to summarize it better. we can see that genres affect the price by rising the amount of high price genres like "Photography".
+
+```{R}
+ann = artsales %>%
+  select(price_usd, year, Genre___Others, Genre___Print, Genre___Photography, Genre___Painting, Genre___Sculpture) %>%
+  mutate(genre = if_else(Genre___Sculpture == 1, "Sculpture", if_else(Genre___Print == 1, "Print", if_else(Genre___Photography == 1, "Photography", if_else(Genre___Painting == 1, "Painting", "Others"))))) %>%
+  select(year, price_usd, genre)
+
+ggplot(ann, aes(x = year, y = price_usd, color = genre)) +
+  geom_point() +
+  labs(title = "Sales Prices Over Time by Genre",
+       x = "Year",
+       y = "Sales Prices (USD)")
+
+ggplot(ann, aes(x = year, y = price_usd, color = genre)) +
+  stat_summary(fun = mean, geom = "line") +
+  labs(title = "Average Sales Price Over Time by Genre",
+       x = "Year",
+       y = "Average Sales Price (USD)") +
+  theme_minimal()
+
+```
