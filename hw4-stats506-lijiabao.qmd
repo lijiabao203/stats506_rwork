@@ -171,7 +171,7 @@ iii. Is the graph publication ready?
 
 a.  
 
-Based on the plot, there is a noticeable trend suggesting that newer items (or items from more recent years) tend to have higher prices. 
+Based on the plot, there is a noticeable trend suggesting that newer items (or items from more recent years) tend to have higher prices.
 
 ```{R}
 artsales = read.csv("df_for_ml_improved_new_market.csv")
@@ -210,8 +210,7 @@ ggplot(ann, aes(x = year, fill = genre)) +
   geom_histogram(position = "jitter")
 ```
 
-c.  
-Although for all genres of sales, prices all have rising trends in these years, we can see in the first plot, thre are lots of green points with higher prices in latter years. And in the latter figure, the mean value can help us to summarize it better. we can see that genres affect the price by rising the amount of high price genres like "Photography".
+c.  Although for all genres of sales, prices all have rising trends in these years, we can see in the first plot, thre are lots of green points with higher prices in latter years. And in the latter figure, the mean value can help us to summarize it better. we can see that genres affect the price by rising the amount of high price genres like "Photography".
 
 ```{R}
 ann = artsales %>%

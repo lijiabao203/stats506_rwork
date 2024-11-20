@@ -1,0 +1,437 @@
+---
+title: "ps5-stats506-lijiabao"
+author: "Jiabao Li"
+format: html
+editor: visual
+---
+
+> link of github: https://github.com/lijiabao203/stats506_rwork
+
+## **Problem 1 - OOP Programming**
+
+Create a class to represent rational numbers (numbers of the form ab for integers a and b). Do this using S4.
+
+a.  For the `rational` class, define the following:
+
+    1.  A constructor
+
+    2.  A validator that ensures the denominator is non-zero.
+
+    3.  A `show` method.
+
+    4.  A `simplify` method, to obtain the simplest form (e.g.`simplify(2/4)` produces `1/2`).
+
+    5.  A `quotient` method (e.g.`quotient(3/7)` produces `.42857143...`). It should support a `digits` argument *but only in the printing, not the returned result* (Hint: what does `print` return?).
+
+    6.  Addition, subtraction, multiplication, division. These should all return a `rational`.
+
+    7.  You’ll (probably) need [GCD](https://en.wikipedia.org/wiki/Greatest_common_divisor) and [LCM](https://en.wikipedia.org/wiki/Least_common_multiple) as part of some of these calculations; include these functions using **Rcpp**. Even if you don’t need these functions for another calculation, include them.
+
+```{R}
+library(Rcpp)
+
+# 7. GCD and LCM function
+# they are special defined: 
+# - for gcd, it will always return a non-negative number
+# - for lcm, it will return a LCM considering positive or negative
+#   - like, for 1 and -1, it will return -1
+#   - for 1 and 2, it will return 2
+#   - for -1 and -2, it will return 2
+# - lcm not used in fact, because I will simplify the outcome of add and minus. So such simplify seems not necessary here.
+cppFunction('
+  int gcd(int a, int b) {
+    a = abs(a);
+    b = abs(b);
+    if(a == 0 || b == 0){
+      return 0;
+    }
+    while (b != 0) {
+      int temp = b;
+      b = a % b;
+      a = temp;
+    }
+    return a;
+  }
+')
+
+cppFunction('
+  int lcm(int a, int b) {
+    int ans = a * b;
+    if(ans == 0){
+      return ans;
+    }
+    a = abs(a);
+    b = abs(b);
+    while (b != 0) {
+      int temp = b;
+      b = a % b;
+      a = temp;
+    }
+    return ans/ a;
+  }
+')
+
+# Define the Rational class
+setClass(
+  "Rational",
+  slots = list(numerator = "numeric", denominator = "numeric"),
+)
+
+# 1. Constructor 
+setMethod("initialize", "Rational", function(.Object, numerator = 0, denominator = 1) {
+  if (denominator == 0) {
+    stop("Denominator cannot be zero!")
+  }
+  .Object@numerator <- numerator
+  .Object@denominator <- denominator
+  return(.Object)
+})
+
+# 2. Validator
+setValidity("Rational", function(object) {
+  if (object@denominator == 0) stop("Denominator cannot be zero!")
+  if ((!is.numeric(object@numerator)) | (!is.numeric(object@denominator))) stop("One of part is not a numeric element")
+  if ((object@denominator != as.integer(object@denominator)) | (object@numerator != as.integer(object@numerator))){ 
+    stop("One of parts is not integer")
+  }
+  return(TRUE)
+})
+
+# 3. Show Method
+setMethod("show", "Rational", function(object) {
+  cat(object@numerator, "/", object@denominator, "\n")
+})
+
+# 4. Simplify method
+setGeneric("simplify",
+           function(object) {
+             standardGeneric("simplify")
+           })
+setMethod("simplify", "Rational", function(object){
+  if (object@numerator == 0){
+    object@denominator = object@denominator / abs(object@denominator)
+    return(object)
+  }
+  g <- gcd(object@numerator, object@denominator)  
+  # Not necessary to use the absolute value for GCD, because we consider this in gcd function
+  object@numerator <- object@numerator / g
+  object@denominator <- object@denominator / g
+  return(object)
+})
+
+# 5. Quotient Method
+setGeneric("quotient",
+           function(object, digits=10) {
+             standardGeneric("quotient")
+           })
+setMethod("quotient", "Rational" ,function(object, digits=10) {
+  if(!is.numeric(digits)){
+    stop("digit is not a number")
+  }else if(digits == as.integer(digits)) {
+    print(object@numerator / object@denominator, digits = digits)
+    return(object@numerator / object@denominator)
+  }else{
+    stop("digit is not an integer")
+  }
+})
+
+# 6. Arithmetic Operations: Addition, Subtraction, Multiplication, Division
+setMethod("+", signature(e1 = "Rational",
+                         e2 = "Rational"),
+          function(e1, e2) {
+            numerator <- e1@numerator * e2@denominator + e2@numerator * e1@denominator
+            denominator <- e1@denominator * e2@denominator
+            return(simplify(new("Rational", numerator = numerator, denominator = denominator)))
+          })
+
+setMethod("-", signature(e1 = "Rational",
+                         e2 = "Rational"),
+          function(e1, e2) {
+            numerator <- e1@numerator * e2@denominator - e2@numerator * e1@denominator
+            denominator <- e1@denominator * e2@denominator
+            return(simplify(new("Rational", numerator = numerator, denominator = denominator)))
+          })
+
+setMethod("*", signature(e1 = "Rational",
+                         e2 = "Rational"),
+          function(e1, e2) {
+            numerator <- e1@numerator * e2@numerator
+            denominator <- e1@denominator * e2@denominator
+            return(simplify(new("Rational", numerator = numerator, denominator = denominator)))
+          })
+
+setMethod("/", signature(e1 = "Rational",
+                         e2 = "Rational"),
+          function(e1, e2) {
+            if (r2@numerator == 0) {
+              stop("Cannot divide by zero.")
+              }
+            numerator <- e1@numerator * e2@denominator
+            denominator <- e1@denominator * e2@numerator
+            return(simplify(new("Rational", numerator = numerator, denominator = denominator)))
+          })
+```
+
+b.  Use your `rational` class to create three objects:
+
+    -   `r1`: 24/6
+
+    -   `r2`: 7/230
+
+    -   `r3`: 0/4
+
+```{R}
+# Creating rational numbers
+r1 <- new("Rational", numerator = 24, denominator = 6)
+r2 <- new("Rational", numerator = 7, denominator = 230)
+r3 <- new("Rational", numerator = 0, denominator = 4)
+```
+
+       
+Evaluate the following code (remember you can tell Quarto not to stop on errors):
+
+
+```{R, error = TRUE}
+r1 
+r3 
+r1 + r2 
+r1 - r2 
+r1 * r2 
+r1 / r2 
+r1 + r3 
+r1 * r3 
+r2 / r3 
+quotient(r1) 
+quotient(r2) 
+quotient(r2, digits = 3)
+quotient(r2, digits = 3.14)
+quotient(r2, digits = "avocado")
+q2 <- quotient(r2, digits = 3) 
+q2 
+quotient(r3) 
+simplify(r1) 
+simplify(r2) 
+simplify(r3)
+```
+Remark:
+
+- simplify $0/n$ to $0/1$ for any $n > 0$ or $0/-1$ for any $n<0$ because n is meaningless
+
+- will automatically simplify the outcome of add, minus, multiple and division
+
+- for rational like 4/1, will not return a 4 in simplify because this will not be helpful for the rational formula
+
+- for quotient function, default print is 10 digits and will return the result of division without any restriction of digits. And there would be 2 rows in the html output, because it will print the return value too (in the second line), and the first line is the outcome it print inside. We can use invisible() to hide this, but it seems this function need a return value.
+
+
+c.  Show that your validator does not allow the creation of rational’s with 0 denominator, and check other malformed input to your constructor.
+
+```{R, error = TRUE}
+testObject <- new("Rational", numerator = 5, denominator = 0)  # Should throw an error
+validObject(testObject)
+testObject <- new("Rational", numerator = 5, denominator = 'a')
+validObject(testObject)
+testObject <- new("Rational", numerator = 1.5, denominator = 1)
+validObject(testObject)
+```
+
+Additionally, I found that if you input a list like c(1, 2) to be one of the arguments, there will not be stop return. However, I used "|" in the validation, so there will be error return. 
+
+## **Problem 2 - plotly**
+
+Let’s revisit the art data from the last problem set. Use **plotly** for these.
+
+a.  Regenerate your plot which addresses the second question from last time:
+
+    ii. Does the distribution of genre of sales across years appear to change?
+
+    You may copy your plot from last time, or copy my plot from the solutions, or come up with your own new plot.
+
+```{R}
+library(ggplot2)
+library(plotly)
+library(dplyr)
+
+# Read Data
+art <- read.csv("df_for_ml_improved_new_market.csv")
+
+# Use my own code and changed a little
+ann <- art %>%
+  select(year, Genre___Others, Genre___Print, Genre___Photography, Genre___Painting, 
+         Genre___Sculpture) %>%
+  mutate(genre = if_else(Genre___Sculpture == 1, "Sculpture", 
+                         if_else(Genre___Print == 1, "Print", 
+                                 if_else(Genre___Photography == 1, "Photography", 
+                                         if_else(Genre___Painting == 1, "Painting", 
+                                                 "Others")))))
+ann_counts <- ann %>%
+  group_by(year, genre) %>%
+  tally() %>%
+  ungroup()
+ann_count_year <- ann_counts %>%
+  group_by(year) %>%
+  summarise(total = sum(n)) %>%
+  ungroup()
+
+# calculate the percentage
+ann_counts <- ann_counts %>%
+  left_join(ann_count_year, by = "year") %>%
+  mutate(percentage = (n / total) * 100)  # Change to percentage
+
+# Use Plotly to plot bar figure
+fig <- plot_ly(data = ann_counts, 
+               x = ~year, 
+               y = ~percentage,  # Use the calculated percentage for each genre
+               color = ~genre, 
+               type = 'bar', 
+               text = ~paste(genre, ": ", round(percentage, 2), "%"),  # Tooltip with percentage
+               hoverinfo = 'text') %>%
+  layout(
+    title = "Genre Distribution Across Years (Normalized by Year)",
+    xaxis = list(title = 'Year'),
+    yaxis = list(title = 'Percentage (%)', range = c(0, 100)),
+    barmode = 'stack',  # Stack the bars to represent proportions for each year
+    showlegend = TRUE
+  )
+
+# Show the plot
+fig
+```
+
+b.  Generate an interactive plot with **plotly** that can address both of these questions from last time:
+
+    i.  Is there a change in the sales price in USD over time?
+
+    ii. How does the genre affect the change in sales price over time?
+
+    This should be a single interactive plot, with which a user can manipulate the view to be able to look at change over time overall, or by genre.
+
+To finish this, I think I need a figure with data of overall price and prices of different classses in different years.
+
+```{R}
+overall <- art %>%
+  group_by(year) %>%
+  summarise(avg_price = mean(price_usd, na.rm = TRUE))
+genre_pri <- art %>%
+  select(year, Genre___Photography, Genre___Print, Genre___Sculpture, Genre___Painting, Genre___Others, price_usd) %>%
+  mutate(
+    Painting = ifelse(Genre___Painting == 1, price_usd, NA),
+    Sculpture = ifelse(Genre___Sculpture == 1, price_usd, NA),
+    Photography = ifelse(Genre___Photography == 1, price_usd, NA),
+    Print = ifelse(Genre___Print == 1, price_usd, NA),
+    Others = ifelse(Genre___Others == 1, price_usd, NA)
+  ) %>%
+  group_by(year) %>%
+  summarise(
+    avg_price_painting = mean(Painting, na.rm = TRUE),
+    avg_price_sculpture = mean(Sculpture, na.rm = TRUE),
+    avg_price_photography = mean(Photography, na.rm = TRUE),
+    avg_price_print = mean(Print, na.rm = TRUE),
+    avg_price_others = mean(Others, na.rm = TRUE)
+  ) %>%
+  ungroup()
+
+
+fig <- plot_ly() %>%
+  add_lines(data = overall, x = ~year, y = ~avg_price, name = "Overall", line = list(color = 'blue', width = 3)) %>%
+  add_lines(data = genre_pri, x = ~year, y = ~avg_price_painting, name = "Painting", line = list(color = 'red', width = 2)) %>%
+  add_lines(data = genre_pri, x = ~year, y = ~avg_price_sculpture, name = "Sculpture", line = list(color = 'green', width = 2)) %>%
+  add_lines(data = genre_pri, x = ~year, y = ~avg_price_photography, name = "Photography", line = list(color = 'purple', width = 2)) %>%
+  add_lines(data = genre_pri, x = ~year, y = ~avg_price_print, name = "Print", line = list(color = 'orange', width = 2)) %>%
+  add_lines(data = genre_pri, x = ~year, y = ~avg_price_others, name = "Others", line = list(color = 'cyan', width = 2)) %>%
+  layout(
+    title = "Change in Prices Over Time (Overall and by Genre)",
+    xaxis = list(title = "Year"),
+    yaxis = list(title = "Average Price"),
+    hovermode = "closest",
+    showlegend = TRUE,
+    legend = list(title = list(text = 'Genre'))
+  )
+
+fig
+
+```
+
+These will be graded similar to last time:
+
+i.  Is the type of graph & choice of variables appropriate to answer the question?
+
+ii. Is the graph clear and easy to interpret?
+
+iii. Is the graph publication ready?
+
+## **Problem 3 - data.table**
+
+Repeat [problem set 4, question 1](https://dept.stat.lsa.umich.edu/~jerrick/courses/stat506_f24/ps4.html#problem-1---tidyverse), using **data.table** for this problem:
+a.  Generate a table (which can just be a nicely printed tibble) reporting the mean and median departure delay per airport. Generate a second table (which again can be a nicely printed tibble) reporting the mean and median arrival delay per airport. Exclude any destination with under 10 flights. Do this exclusion through code, not manually.
+
+    Additionally,
+
+    -   Order both tables in descending mean delay.
+
+    -   Both tables should use the airport *names* not the airport *codes*.
+
+    -   Both tables should print all rows.
+
+```{R}
+library(nycflights13)
+library(dplyr)
+library(data.table)
+
+# Change to data table
+flights_df <- data.table(flights)
+airports_df <- data.table(airports)
+planes_df <- data.table(planes)
+
+# Generate the table 1 for dep delay
+departure <- flights_df[
+  , .(mean_dep_delay = mean(dep_delay, na.rm = TRUE), 
+      median_dep_delay = median(dep_delay, na.rm = TRUE), 
+      numflights = .N), 
+  by = origin
+][numflights >= 10][
+  airports_df, on = .(origin = faa), 
+  .(name, mean_dep_delay, median_dep_delay), 
+  nomatch = 0
+][order(-mean_dep_delay)]
+
+# Print it, because it is small, we don't need to specially claim for printing all rows
+print(departure)
+
+# Generate the table 2 for arr delay
+arrival <- flights_df[
+  , .(mean_arr_delay = mean(arr_delay, na.rm = TRUE), 
+      median_arr_delay = median(arr_delay, na.rm = TRUE), 
+      numflights = .N), 
+  by = dest
+][numflights >= 10][
+  airports_df, on = .(dest = faa), 
+  .(name, mean_arr_delay, median_arr_delay), 
+  nomatch = 0
+][order(-mean_arr_delay)]
+
+# need special claim to print all rows
+print(arrival)
+
+```
+
+b.  How many flights did the aircraft model with the fastest average speed take? Produce a tibble with 1 row, and entries for the model, average speed (in MPH) and number of flights.
+
+```{R}
+
+
+# Average MPH by plane model: Join with planes, calculate time, mph and group by model
+mph_data <- flights_df[
+  planes_df, on = .(tailnum = tailnum),
+  .(time = air_time / 60, mph = distance / (air_time / 60), model = model)
+]
+
+# Group by model and summarize
+model_mph <- mph_data[
+  , .(avgmph = mean(mph, na.rm = TRUE), nflights = .N),
+  by = model
+][order(-avgmph)][1]
+
+# Print the model with the highest average mph
+print(model_mph)
+```
