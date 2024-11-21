@@ -6,6 +6,8 @@ editor: visual
 ---
 
 > link of github: https://github.com/lijiabao203/stats506_rwork
+>
+> I hided some of warnings while importing packages. I think this is rational.
 
 ## **Problem 1 - OOP Programming**
 
@@ -27,7 +29,7 @@ a.  For the `rational` class, define the following:
 
     7.  You’ll (probably) need [GCD](https://en.wikipedia.org/wiki/Greatest_common_divisor) and [LCM](https://en.wikipedia.org/wiki/Least_common_multiple) as part of some of these calculations; include these functions using **Rcpp**. Even if you don’t need these functions for another calculation, include them.
 
-```{R}
+```{R, warning = FALSE}
 library(Rcpp)
 
 # 7. GCD and LCM function
@@ -187,9 +189,7 @@ r2 <- new("Rational", numerator = 7, denominator = 230)
 r3 <- new("Rational", numerator = 0, denominator = 4)
 ```
 
-       
 Evaluate the following code (remember you can tell Quarto not to stop on errors):
-
 
 ```{R, error = TRUE}
 r1 
@@ -213,16 +213,16 @@ simplify(r1)
 simplify(r2) 
 simplify(r3)
 ```
+
 Remark:
 
-- simplify $0/n$ to $0/1$ for any $n > 0$ or $0/-1$ for any $n<0$ because n is meaningless
+-   simplify $0/n$ to $0/1$ for any $n > 0$ or $0/-1$ for any $n<0$ because n is meaningless
 
-- will automatically simplify the outcome of add, minus, multiple and division
+-   will automatically simplify the outcome of add, minus, multiple and division
 
-- for rational like 4/1, will not return a 4 in simplify because this will not be helpful for the rational formula
+-   for rational like 4/1, will not return a 4 in simplify because this will not be helpful for the rational formula
 
-- for quotient function, default print is 10 digits and will return the result of division without any restriction of digits. And there would be 2 rows in the html output, because it will print the return value too (in the second line), and the first line is the outcome it print inside. We can use invisible() to hide this, but it seems this function need a return value.
-
+-   for quotient function, default print is 10 digits and will return the result of division without any restriction of digits. And there would be 2 rows in the html output, because it will print the return value too (in the second line), and the first line is the outcome it print inside. We can use invisible() to hide this, but it seems this function need a return value.
 
 c.  Show that your validator does not allow the creation of rational’s with 0 denominator, and check other malformed input to your constructor.
 
@@ -235,7 +235,7 @@ testObject <- new("Rational", numerator = 1.5, denominator = 1)
 validObject(testObject)
 ```
 
-Additionally, I found that if you input a list like c(1, 2) to be one of the arguments, there will not be stop return. However, I used "|" in the validation, so there will be error return. 
+Additionally, I found that if you input a list like c(1, 2) to be one of the arguments, there will not be stop return. However, I used "\|" in the validation, so there will be error return.
 
 ## **Problem 2 - plotly**
 
@@ -247,7 +247,7 @@ a.  Regenerate your plot which addresses the second question from last time:
 
     You may copy your plot from last time, or copy my plot from the solutions, or come up with your own new plot.
 
-```{R}
+```{R warning = FALSE}
 library(ggplot2)
 library(plotly)
 library(dplyr)
@@ -256,6 +256,7 @@ library(dplyr)
 art <- read.csv("df_for_ml_improved_new_market.csv")
 
 # Use my own code and changed a little
+# I found that it seems not easy to just use the original data because I didn't find how to group them by years in plotly figure. So I changed the data.
 ann <- art %>%
   select(year, Genre___Others, Genre___Print, Genre___Photography, Genre___Painting, 
          Genre___Sculpture) %>%
@@ -273,24 +274,22 @@ ann_count_year <- ann_counts %>%
   summarise(total = sum(n)) %>%
   ungroup()
 
-# calculate the percentage
 ann_counts <- ann_counts %>%
   left_join(ann_count_year, by = "year") %>%
   mutate(percentage = (n / total) * 100)  # Change to percentage
 
-# Use Plotly to plot bar figure
 fig <- plot_ly(data = ann_counts, 
                x = ~year, 
-               y = ~percentage,  # Use the calculated percentage for each genre
+               y = ~percentage, 
                color = ~genre, 
                type = 'bar', 
-               text = ~paste(genre, ": ", round(percentage, 2), "%"),  # Tooltip with percentage
+               text = ~paste(genre, ": ", round(percentage, 2), "%"), 
                hoverinfo = 'text') %>%
   layout(
-    title = "Genre Distribution Across Years (Normalized by Year)",
+    title = "Genre Percent by Years",
     xaxis = list(title = 'Year'),
     yaxis = list(title = 'Percentage (%)', range = c(0, 100)),
-    barmode = 'stack',  # Stack the bars to represent proportions for each year
+    barmode = 'stack', 
     showlegend = TRUE
   )
 
@@ -306,7 +305,7 @@ b.  Generate an interactive plot with **plotly** that can address both of these 
 
     This should be a single interactive plot, with which a user can manipulate the view to be able to look at change over time overall, or by genre.
 
-To finish this, I think I need a figure with data of overall price and prices of different classses in different years.
+To finish this, I think I need a figure with data of overall price and prices of different genres in different years.
 
 ```{R}
 overall <- art %>%
@@ -362,18 +361,19 @@ iii. Is the graph publication ready?
 
 ## **Problem 3 - data.table**
 
-Repeat [problem set 4, question 1](https://dept.stat.lsa.umich.edu/~jerrick/courses/stat506_f24/ps4.html#problem-1---tidyverse), using **data.table** for this problem:
-a.  Generate a table (which can just be a nicely printed tibble) reporting the mean and median departure delay per airport. Generate a second table (which again can be a nicely printed tibble) reporting the mean and median arrival delay per airport. Exclude any destination with under 10 flights. Do this exclusion through code, not manually.
+Repeat [problem set 4, question 1](https://dept.stat.lsa.umich.edu/~jerrick/courses/stat506_f24/ps4.html#problem-1---tidyverse), using **data.table** for this problem: a. Generate a table (which can just be a nicely printed tibble) reporting the mean and median departure delay per airport. Generate a second table (which again can be a nicely printed tibble) reporting the mean and median arrival delay per airport. Exclude any destination with under 10 flights. Do this exclusion through code, not manually.
 
-    Additionally,
+```         
+Additionally,
 
-    -   Order both tables in descending mean delay.
+-   Order both tables in descending mean delay.
 
-    -   Both tables should use the airport *names* not the airport *codes*.
+-   Both tables should use the airport *names* not the airport *codes*.
 
-    -   Both tables should print all rows.
+-   Both tables should print all rows.
+```
 
-```{R}
+```{R warning = FALSE}
 library(nycflights13)
 library(dplyr)
 library(data.table)
@@ -394,8 +394,7 @@ departure <- flights_df[
   .(name, mean_dep_delay, median_dep_delay), 
   nomatch = 0
 ][order(-mean_dep_delay)]
-
-# Print it, because it is small, we don't need to specially claim for printing all rows
+# because the print of data.table is special, we don't need any additioanl code to print all rows
 print(departure)
 
 # Generate the table 2 for arr delay
@@ -409,8 +408,6 @@ arrival <- flights_df[
   .(name, mean_arr_delay, median_arr_delay), 
   nomatch = 0
 ][order(-mean_arr_delay)]
-
-# need special claim to print all rows
 print(arrival)
 
 ```
